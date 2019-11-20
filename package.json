@@ -1,0 +1,24 @@
+{
+  "name": "qrcodejs",
+  "description": "Slightly optimized and repackaged https://github.com/davidshimjs/qrcodejs",
+  "main": "qrcode.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TheWizz/qrcodejs.git"
+  },
+  "author": "Mike",
+  "license": "MIT",
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-concat": "^2.6.1",
+    "gulp-env": "^0.4.0",
+    "gulp-gzip": "^1.4.2",
+    "gulp-rename": "^1.2.2",
+    "gulp-uglify": "^2.1.2",
+    "requirejs": "^2.3.5"
+  },
+  "dependencies": {}
+}
