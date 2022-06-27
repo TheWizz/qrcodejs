@@ -9,10 +9,11 @@
  * @see <a href="http://jeromeetienne.github.com/jquery-qrcode/" target="_blank">http://jeromeetienne.github.com/jquery-qrcode/</a>
  *
  * TheWizz removed non-SVG modes and some other old stuff and repackaged slightly to use with RequireJS and is optimizer.
+ * melvinm1 re-added canvas mode, removed SVG mode and added border option.
  */
 
 
-define(function () {
+ define(function () {
 
 	"use strict";
 
@@ -158,58 +159,106 @@ define(function () {
 	if(bit){this.buffer[bufIndex]|=(0x80>>>(this.length%8));}
 	this.length++;}};var QRCodeLimitLength=[[17,14,11,7],[32,26,20,14],[53,42,32,24],[78,62,46,34],[106,84,60,44],[134,106,74,58],[154,122,86,64],[192,152,108,84],[230,180,130,98],[271,213,151,119],[321,251,177,137],[367,287,203,155],[425,331,241,177],[458,362,258,194],[520,412,292,220],[586,450,322,250],[644,504,364,280],[718,560,394,310],[792,624,442,338],[858,666,482,382],[929,711,509,403],[1003,779,565,439],[1091,857,611,461],[1171,911,661,511],[1273,997,715,535],[1367,1059,751,593],[1465,1125,805,625],[1528,1190,868,658],[1628,1264,908,698],[1732,1370,982,742],[1840,1452,1030,790],[1952,1538,1112,842],[2068,1628,1168,898],[2188,1722,1228,958],[2303,1809,1283,983],[2431,1911,1351,1051],[2563,1989,1423,1093],[2699,2099,1499,1139],[2809,2213,1579,1219],[2953,2331,1663,1273]];
 
-	var svgDrawer = (function() {
-
+	var Drawing = (function () { // Drawing in Canvas
+		/**
+		 * Drawing QRCode by using canvas
+		 * 
+		 * @constructor
+		 * @param {HTMLElement} el
+		 * @param {Object} htOption QRCode Options 
+		 */
 		var Drawing = function (el, htOption) {
-			this._el = el;
+    		this._bIsPainted = false;
+		
 			this._htOption = htOption;
+			this._elCanvas = document.createElement("canvas");
+			el.appendChild(this._elCanvas);
+			this._el = el;
+			this._oContext = this._elCanvas.getContext("2d");
+			this._bIsPainted = false;
 		};
-
+			
+		/**
+		 * Draw the QRCode
+		 * 
+		 * @param {QRCode} oQRCode 
+		 */
 		Drawing.prototype.draw = function (oQRCode) {
-			var _htOption = this._htOption;
-			var _el = this._el;
+            var _oContext = this._oContext;
+            var _htOption = this._htOption;
 			var nCount = oQRCode.getModuleCount();
-			var nWidth = Math.floor(_htOption.width / nCount);
-			var nHeight = Math.floor(_htOption.height / nCount);
+			var nWidth = _htOption.width / nCount;
+			var nHeight = _htOption.height / nCount;
+			//var nRoundedWidth = Math.round(nWidth);
+			//var nRoundedHeight = Math.round(nHeight);
 
+			this._elCanvas.width = _htOption.width + _htOption.border * 2;
+			this._elCanvas.height = _htOption.height + _htOption.border * 2;
 			this.clear();
+			_oContext.fillStyle = _htOption.colorLight;
+			_oContext.fillRect(0, 0, this._elCanvas.width, this._elCanvas.height);
 
-			function makeSVG(tag, attrs) {
-				var el = document.createElementNS('http://www.w3.org/2000/svg', tag);
-				for (var k in attrs)
-					if (attrs.hasOwnProperty(k)) el.setAttribute(k, attrs[k]);
-				return el;
-			}
-
-			var svg = makeSVG("svg" , {'viewBox': '0 0 ' + String(nCount) + " " + String(nCount), 'width': '100%', 'height': '100%', 'fill': _htOption.colorLight});
-			svg.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
-			_el.appendChild(svg);
-
-			svg.appendChild(makeSVG("rect", {"fill": _htOption.colorLight, "width": "100%", "height": "100%"}));
-			svg.appendChild(makeSVG("rect", {"fill": _htOption.colorDark, "width": "1", "height": "1", "id": "blk"}));
-
-			var attrs = {"x": "", "y": ""};
 			for (var row = 0; row < nCount; row++) {
 				for (var col = 0; col < nCount; col++) {
-					if (oQRCode.isDark(row, col)) {
-						attrs.x = col.toString();
-						attrs.y = row.toString();
-						var child = makeSVG("use", attrs);
-						child.setAttributeNS("http://www.w3.org/1999/xlink", "href", "#blk")
-						svg.appendChild(child);
-					}
+					var bIsDark = oQRCode.isDark(row, col);		
+					var nLeft = col * nWidth + _htOption.border;
+					var nTop = row * nHeight + _htOption.border;
+					_oContext.strokeStyle = bIsDark ? _htOption.colorDark : _htOption.colorLight;
+					_oContext.lineWidth = 1;
+					_oContext.fillStyle = bIsDark ? _htOption.colorDark : _htOption.colorLight;					
+					_oContext.fillRect(nLeft, nTop, nWidth, nHeight);
+					
+					// 안티 앨리어싱 방지 처리
+					/*_oContext.strokeRect(
+						Math.floor(nLeft) + 0.5,
+						Math.floor(nTop) + 0.5,
+						nRoundedWidth,
+						nRoundedHeight
+					);
+					
+					_oContext.strokeRect(
+						Math.ceil(nLeft) - 0.5,
+						Math.ceil(nTop) - 0.5,
+						nRoundedWidth,
+						nRoundedHeight
+					);*/
 				}
 			}
+			
+			this._bIsPainted = true;
 		};
+			
+		/**
+		 * Return whether the QRCode is painted or not
+		 * 
+		 * @return {Boolean}
+		 */
+		Drawing.prototype.isPainted = function () {
+			return this._bIsPainted;
+		};
+		
+		/**
+		 * Clear the QRCode
+		 */
 		Drawing.prototype.clear = function () {
-			while (this._el.hasChildNodes())
-				this._el.removeChild(this._el.lastChild);
+			this._oContext.clearRect(0, 0, this._elCanvas.width, this._elCanvas.height);
+			this._bIsPainted = false;
 		};
+		
+		/**
+		 * @private
+		 * @param {Number} nNumber
+		 */
+		Drawing.prototype.round = function (nNumber) {
+			if (!nNumber) {
+				return nNumber;
+			}
+			
+			return Math.floor(nNumber * 1000) / 1000;
+		};
+		
 		return Drawing;
 	})();
-
-	// Always draw using SVG methof
-	var Drawing = svgDrawer;
 
 	/**
 	 * Get the type by string length
@@ -289,6 +338,7 @@ define(function () {
 		this._htOption = {
 			width : 256, 
 			height : 256,
+			border: 20,
 			typeNumber : 4,
 			colorDark : "#000000",
 			colorLight : "#ffffff",
@@ -310,10 +360,6 @@ define(function () {
 		
 		if (typeof el == "string") {
 			el = document.getElementById(el);
-		}
-
-		if (this._htOption.useSVG) {
-			Drawing = svgDrawer;
 		}
 		
 		this._el = el;
