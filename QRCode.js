@@ -3,7 +3,7 @@
  * - Using the 'QRCode for Javascript library'
  * - Fixed dataset of 'QRCode for Javascript library' for support full-spec.
  * - this library has no dependencies.
- * 
+ *
  * @author davidshimjs
  * @see <a href="http://www.d-project.com/" target="_blank">http://www.d-project.com/</a>
  * @see <a href="http://jeromeetienne.github.com/jquery-qrcode/" target="_blank">http://jeromeetienne.github.com/jquery-qrcode/</a>
@@ -29,7 +29,7 @@
 	// Licensed under the MIT license:
 	//   http://www.opensource.org/licenses/mit-license.php
 	//
-	// The word "QR Code" is registered trademark of 
+	// The word "QR Code" is registered trademark of
 	// DENSO WAVE INCORPORATED
 	//   http://www.denso-wave.com/qrcode/faqpatent-e.html
 	//
@@ -162,26 +162,30 @@
 	var Drawing = (function () { // Drawing in Canvas
 		/**
 		 * Drawing QRCode by using canvas
-		 * 
+		 *
 		 * @constructor
 		 * @param {HTMLElement} el
-		 * @param {Object} htOption QRCode Options 
+		 * @param {Object} htOption QRCode Options
 		 */
 		var Drawing = function (el, htOption) {
     		this._bIsPainted = false;
-		
+
 			this._htOption = htOption;
 			this._elCanvas = document.createElement("canvas");
 			el.appendChild(this._elCanvas);
 			this._el = el;
-			this._oContext = this._elCanvas.getContext("2d");
+			/*	The willReadFrequently attribute works around a bug in Chrome that sometimes
+				caused the QR code to not render at all alongside video by avoiding the
+				"hardware accelerated 2D canvas". /MF 230814
+			 */
+			this._oContext = this._elCanvas.getContext("2d", { willReadFrequently: true });
 			this._bIsPainted = false;
 		};
-			
+
 		/**
 		 * Draw the QRCode
-		 * 
-		 * @param {QRCode} oQRCode 
+		 *
+		 * @param {QRCode} oQRCode
 		 */
 		Drawing.prototype.draw = function (oQRCode) {
             var _oContext = this._oContext;
@@ -200,14 +204,14 @@
 
 			for (var row = 0; row < nCount; row++) {
 				for (var col = 0; col < nCount; col++) {
-					var bIsDark = oQRCode.isDark(row, col);		
+					var bIsDark = oQRCode.isDark(row, col);
 					var nLeft = col * nWidth + _htOption.border;
 					var nTop = row * nHeight + _htOption.border;
 					_oContext.strokeStyle = bIsDark ? _htOption.colorDark : _htOption.colorLight;
 					_oContext.lineWidth = 1;
-					_oContext.fillStyle = bIsDark ? _htOption.colorDark : _htOption.colorLight;					
+					_oContext.fillStyle = bIsDark ? _htOption.colorDark : _htOption.colorLight;
 					_oContext.fillRect(nLeft, nTop, nWidth, nHeight);
-					
+
 					// 안티 앨리어싱 방지 처리
 					/*_oContext.strokeRect(
 						Math.floor(nLeft) + 0.5,
@@ -215,7 +219,7 @@
 						nRoundedWidth,
 						nRoundedHeight
 					);
-					
+
 					_oContext.strokeRect(
 						Math.ceil(nLeft) - 0.5,
 						Math.ceil(nTop) - 0.5,
@@ -224,19 +228,19 @@
 					);*/
 				}
 			}
-			
+
 			this._bIsPainted = true;
 		};
-			
+
 		/**
 		 * Return whether the QRCode is painted or not
-		 * 
+		 *
 		 * @return {Boolean}
 		 */
 		Drawing.prototype.isPainted = function () {
 			return this._bIsPainted;
 		};
-		
+
 		/**
 		 * Clear the QRCode
 		 */
@@ -244,7 +248,7 @@
 			this._oContext.clearRect(0, 0, this._elCanvas.width, this._elCanvas.height);
 			this._bIsPainted = false;
 		};
-		
+
 		/**
 		 * @private
 		 * @param {Number} nNumber
@@ -253,28 +257,28 @@
 			if (!nNumber) {
 				return nNumber;
 			}
-			
+
 			return Math.floor(nNumber * 1000) / 1000;
 		};
-		
+
 		return Drawing;
 	})();
 
 	/**
 	 * Get the type by string length
-	 * 
+	 *
 	 * @private
 	 * @param {String} sText
 	 * @param {Number} nCorrectLevel
 	 * @return {Number} type
 	 */
-	function _getTypeNumber(sText, nCorrectLevel) {			
+	function _getTypeNumber(sText, nCorrectLevel) {
 		var nType = 1;
 		var length = _getUTF8Length(sText);
-		
+
 		for (var i = 0, len = QRCodeLimitLength.length; i <= len; i++) {
 			var nLimit = 0;
-			
+
 			switch (nCorrectLevel) {
 				case QRErrorCorrectLevel.L :
 					nLimit = QRCodeLimitLength[i][0];
@@ -289,18 +293,18 @@
 					nLimit = QRCodeLimitLength[i][3];
 					break;
 			}
-			
+
 			if (length <= nLimit) {
 				break;
 			} else {
 				nType++;
 			}
 		}
-		
+
 		if (nType > QRCodeLimitLength.length) {
 			throw new Error("Too long data");
 		}
-		
+
 		return nType;
 	}
 
@@ -308,11 +312,11 @@
 		var replacedText = encodeURI(sText).toString().replace(/\%[0-9a-fA-F]{2}/g, 'a');
 		return replacedText.length + (replacedText.length != sText ? 3 : 0);
 	}
-	
+
 	/**
 	 * @class QRCode
 	 * @constructor
-	 * @example 
+	 * @example
 	 * new QRCode(document.getElementById("test"), "http://jindo.dev.naver.com/collie");
 	 *
 	 * @example
@@ -321,7 +325,7 @@
 	 *    width : 128,
 	 *    height : 128
 	 * });
-	 * 
+	 *
 	 * oQRCode.clear(); // Clear the QRCode.
 	 * oQRCode.makeCode("http://map.naver.com"); // Re-create the QRCode.
 	 *
@@ -332,11 +336,11 @@
 	 * @param {Number} [vOption.height=256]
 	 * @param {String} [vOption.colorDark="#000000"]
 	 * @param {String} [vOption.colorLight="#ffffff"]
-	 * @param {QRCode.CorrectLevel} [vOption.correctLevel=QRCode.CorrectLevel.H] [L|M|Q|H] 
+	 * @param {QRCode.CorrectLevel} [vOption.correctLevel=QRCode.CorrectLevel.H] [L|M|Q|H]
 	 */
 	QRCode = function (el, vOption) {
 		this._htOption = {
-			width : 256, 
+			width : 256,
 			height : 256,
 			border: 20,
 			typeNumber : 4,
@@ -344,36 +348,36 @@
 			colorLight : "#ffffff",
 			correctLevel : QRErrorCorrectLevel.H
 		};
-		
+
 		if (typeof vOption === 'string') {
 			vOption	= {
 				text : vOption
 			};
 		}
-		
+
 		// Overwrites options
 		if (vOption) {
 			for (var i in vOption) {
 				this._htOption[i] = vOption[i];
 			}
 		}
-		
+
 		if (typeof el == "string") {
 			el = document.getElementById(el);
 		}
-		
+
 		this._el = el;
 		this._oQRCode = null;
 		this._oDrawing = new Drawing(this._el, this._htOption);
-		
+
 		if (this._htOption.text) {
-			this.makeCode(this._htOption.text);	
+			this.makeCode(this._htOption.text);
 		}
 	};
-	
+
 	/**
 	 * Make the QRCode
-	 * 
+	 *
 	 * @param {String} sText link data
 	 */
 	QRCode.prototype.makeCode = function (sText) {
@@ -381,16 +385,16 @@
 		this._oQRCode.addData(sText);
 		this._oQRCode.make();
 		this._el.title = sText;
-		this._oDrawing.draw(this._oQRCode);			
+		this._oDrawing.draw(this._oQRCode);
 	};
-	
+
 	/**
 	 * Clear the QRCode
 	 */
 	QRCode.prototype.clear = function () {
 		this._oDrawing.clear();
 	};
-	
+
 	/**
 	 * @name QRCode.CorrectLevel
 	 */
